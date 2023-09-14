@@ -23,75 +23,105 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void createUsersTable() {
-        Session session = sessionFactory.openSession();
-        Transaction transaction = session.beginTransaction();
+        try (Session session = sessionFactory.openSession();) {
+            Transaction transaction = session.beginTransaction();
 
-        String sql = "CREATE TABLE IF NOT EXISTS user " +
-                "(id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
-                "name VARCHAR(50) NOT NULL, lastName VARCHAR(50) NOT NULL, " +
-                "age TINYINT NOT NULL)";
+            try {
+                String sql = "CREATE TABLE IF NOT EXISTS user " +
+                        "(id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
+                        "name VARCHAR(50) NOT NULL, last_name VARCHAR(50) NOT NULL, " +
+                        "age TINYINT NOT NULL)";
 
-        session.createSQLQuery(sql).addEntity(User.class);
-
-        transaction.commit();
-        session.close();
+                session.createSQLQuery(sql).addEntity(User.class).executeUpdate();
+                transaction.commit();
+            } catch (Exception e) {
+                transaction.rollback();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void dropUsersTable() {
-        Session session = sessionFactory.openSession();
-        Transaction transaction = session.beginTransaction();
+        try (Session session = sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
+            try {
+                String sql = "DROP TABLE IF EXISTS users";
 
-        String sql = "DROP TABLE IF EXISTS users";
+                session.createSQLQuery(sql).addEntity(User.class).executeUpdate();
 
-        session.createSQLQuery(sql).addEntity(User.class);
+                transaction.commit();
+            } catch (Exception e) {
+                transaction.rollback();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        transaction.commit();
-        session.close();
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        Session session = sessionFactory.openSession();
-        User user = new User(name, lastName, age);
-        session.save(user);
-        session.close();
+        try (Session session = sessionFactory.openSession()) {
+            User user = new User(name, lastName, age);
+            session.save(user);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override
     public void removeUserById(long id) {
-        Session session = sessionFactory.openSession();
-        CriteriaBuilder cb = session.getCriteriaBuilder();
-        CriteriaDelete<User> cd = cb.createCriteriaDelete(User.class);
-        cd.where(cb.equal(cd.from(User.class).get("id"), id));
+        try (Session session = sessionFactory.openSession()) {
+            CriteriaBuilder cb = session.getCriteriaBuilder();
+            CriteriaDelete<User> cd = cb.createCriteriaDelete(User.class);
+            cd.where(cb.equal(cd.from(User.class).get("id"), id));
 
-        Transaction transaction = session.beginTransaction();
-        session.createQuery(cd).executeUpdate();
-        transaction.commit();
-        session.close();
+            Transaction transaction = session.beginTransaction();
+            try {
+                session.createQuery(cd).executeUpdate();
+                transaction.commit();
+            } catch (Exception e) {
+                transaction.rollback();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override
     public List<User> getAllUsers() {
-        Session session = sessionFactory.openSession();
-        CriteriaBuilder cd = session.getCriteriaBuilder();
-        CriteriaQuery<User> cq = cd.createQuery(User.class);
-        Query query = session.createQuery(cq.select(cq.from(User.class)));
-        List<User> userList = query.getResultList();
-        session.close();
-        return userList;
+        try (Session session = sessionFactory.openSession()) {
+            CriteriaBuilder cd = session.getCriteriaBuilder();
+            CriteriaQuery<User> cq = cd.createQuery(User.class);
+            Query query = session.createQuery(cq.select(cq.from(User.class)));
+            List<User> userList = query.getResultList();
+            return userList;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
     public void cleanUsersTable() {
-        Session session = sessionFactory.openSession();
-        CriteriaBuilder cb = session.getCriteriaBuilder();
-        CriteriaDelete<User> cd = cb.createCriteriaDelete(User.class);
-        cd.from(User.class);
+        try (Session session = sessionFactory.openSession()) {
+            CriteriaBuilder cb = session.getCriteriaBuilder();
+            CriteriaDelete<User> cd = cb.createCriteriaDelete(User.class);
+            cd.from(User.class);
 
-        Transaction transaction = session.beginTransaction();
-        session.createQuery(cd).executeUpdate();
-        transaction.commit();
-        session.close();
+            Transaction transaction = session.beginTransaction();
+            try {
+                session.createQuery(cd).executeUpdate();
+                transaction.commit();
+            } catch (Exception e) {
+                transaction.rollback();
+            }
+
+        }
     }
 }

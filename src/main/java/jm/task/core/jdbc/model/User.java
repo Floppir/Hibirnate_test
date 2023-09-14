@@ -18,6 +18,7 @@ public class User implements Serializable {
 
     private String name;
 
+    @Column(name = "last_name")
     private String lastName;
 
     private Byte age;
