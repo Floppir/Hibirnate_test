@@ -10,6 +10,7 @@ import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserDaoHibernateImpl implements UserDao {
@@ -25,18 +26,13 @@ public class UserDaoHibernateImpl implements UserDao {
     public void createUsersTable() {
         try (Session session = sessionFactory.openSession();) {
             Transaction transaction = session.beginTransaction();
+            String sql = "CREATE TABLE IF NOT EXISTS user " +
+                    "(id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
+                    "name VARCHAR(50) NOT NULL, last_name VARCHAR(50) NOT NULL, " +
+                    "age TINYINT NOT NULL)";
 
-            try {
-                String sql = "CREATE TABLE IF NOT EXISTS user " +
-                        "(id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
-                        "name VARCHAR(50) NOT NULL, last_name VARCHAR(50) NOT NULL, " +
-                        "age TINYINT NOT NULL)";
-
-                session.createSQLQuery(sql).addEntity(User.class).executeUpdate();
-                transaction.commit();
-            } catch (Exception e) {
-                transaction.rollback();
-            }
+            session.createSQLQuery(sql).addEntity(User.class).executeUpdate();
+            transaction.commit();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -46,15 +42,11 @@ public class UserDaoHibernateImpl implements UserDao {
     public void dropUsersTable() {
         try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
-            try {
-                String sql = "DROP TABLE IF EXISTS users";
+            String sql = "DROP TABLE IF EXISTS users";
 
-                session.createSQLQuery(sql).addEntity(User.class).executeUpdate();
+            session.createSQLQuery(sql).addEntity(User.class).executeUpdate();
 
-                transaction.commit();
-            } catch (Exception e) {
-                transaction.rollback();
-            }
+            transaction.commit();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -74,54 +66,50 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void removeUserById(long id) {
+        Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
             CriteriaBuilder cb = session.getCriteriaBuilder();
             CriteriaDelete<User> cd = cb.createCriteriaDelete(User.class);
             cd.where(cb.equal(cd.from(User.class).get("id"), id));
 
-            Transaction transaction = session.beginTransaction();
-            try {
-                session.createQuery(cd).executeUpdate();
-                transaction.commit();
-            } catch (Exception e) {
-                transaction.rollback();
-            }
-
+            transaction = session.beginTransaction();
+            session.createQuery(cd).executeUpdate();
+            transaction.commit();
         } catch (Exception e) {
             e.printStackTrace();
+            transaction.rollback();
         }
 
     }
 
     @Override
     public List<User> getAllUsers() {
+        List<User> userList = new ArrayList<>();
         try (Session session = sessionFactory.openSession()) {
             CriteriaBuilder cd = session.getCriteriaBuilder();
             CriteriaQuery<User> cq = cd.createQuery(User.class);
             Query query = session.createQuery(cq.select(cq.from(User.class)));
-            List<User> userList = query.getResultList();
-            return userList;
+            userList = query.getResultList();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return userList;
     }
 
     @Override
     public void cleanUsersTable() {
+        Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
             CriteriaBuilder cb = session.getCriteriaBuilder();
             CriteriaDelete<User> cd = cb.createCriteriaDelete(User.class);
             cd.from(User.class);
 
-            Transaction transaction = session.beginTransaction();
-            try {
-                session.createQuery(cd).executeUpdate();
-                transaction.commit();
-            } catch (Exception e) {
-                transaction.rollback();
-            }
-
+            transaction = session.beginTransaction();
+            session.createQuery(cd).executeUpdate();
+            transaction.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            transaction.rollback();
         }
     }
 }
